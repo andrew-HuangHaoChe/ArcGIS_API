@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ArcGIS MAP</title>
+	<link rel="icon" type="image/png" href="/icons8-falcon-16.png" sizes="16x16">
+	<link rel="icon" type="image/png" href="/icons8-falcon-32.png" sizes="32x32">
+	<link rel="icon" type="image/png" href="/icons8-falcon-96.png" sizes="96x96">
+	<link rel="stylesheet" href="../asset/css/index.css">
+	<link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css">
+	<script src="https://js.arcgis.com/4.22/"></script>
+	<script src="./js/main.js"></script>
+</head>
+
+<body>
+	<div class="map">
+		<div id="viewDiv">
+			<div class="zoom-widget"></div>
+			<div id="SRTM_Color_Index"></div>
+			<div id="topbar">
+				<button class="action-button esri-icon-blank-map-pin" id="pointButton" type="button"
+					title="Draw point"></button>
+				<button class="action-button esri-icon-handle-horizontal" id="multipointButton" type="button"
+					title="Draw multipoint"></button>
+				<button class="action-button esri-icon-polyline" id="polylineButton" type="button"
+					title="Draw polyline"></button>
+				<button class="action-button esri-icon-polygon" id="polygonButton" type="button"
+					title="Draw polygon"></button>
+				<button class="action-button esri-icon-trash" id="resetBtn" type="button"
+					title="Clear graphics"></button>
+			</div>
+		</div>
+		<footer id="footer">
+			<div id="outputMessages" class="esri-widget"></div>
+		</footer>
+		<span id="layerToggle" class="esri-widget"> <input type="checkbox" id="streetsLayer" checked /> Transportation
+		</span>
+	</div>
+</body>
+
+</html>
