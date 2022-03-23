@@ -223,7 +223,8 @@ require(
 					console.log(graphic);
 					let graphicId = graphic.graphic.uid;
 					let graphicType = graphic.graphic.geometry.type;
-					graphicChange(graphicId, graphicType);
+					let graphicMappoint = graphic.mapPoint;
+					graphicChange(graphicId, graphicType, graphicMappoint);
 				}
 			})
 		});
@@ -231,7 +232,7 @@ require(
 			title: "Graphics information in {NAME}",
 			content: graphicChange
 		};
-		function graphicChange (graphicId, graphicType) {
+		function graphicChange (graphicId, graphicType, graphicMappoint) {
 			console.log(graphicType);
 			let graphicContent = document.createElement("div");
 			graphicContent.innerHTML = `
@@ -243,6 +244,7 @@ require(
 			view.popup.open({
 				title: `圖層${graphicId}`,
 				content: graphicContent,
+				location: graphicMappoint,
 			})
 		}
 		tempGraphicsLayer.popupTemplate = popupTemplate;
