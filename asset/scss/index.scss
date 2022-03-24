@@ -6,7 +6,46 @@
 	width: 100%;
 	height: 100%;
 }
-
+.side-menu {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	z-index: 10;
+	width: 350px;
+	height: 100%;
+	box-sizing: border-box;
+	background: #fff;
+	box-shadow: 5px 0px 10px hsla(240, 40%, 15%,.6);
+	transform: translateX(-100%);
+	transition: .3s;
+	padding: 10px;
+}
+.side-menu-switch__label {
+	position: absolute;
+	width: 40px;
+	height: 80px;
+	right: -40px;
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	line-height: 80px;
+	text-align: center;
+	background-color: #000;
+	color:rgb(255, 255, 255);
+	font-size: 30px;
+	border-radius: 0 10px 10px 0;
+	transition: .3s;
+}
+#side-menu-switch {
+	display: none;
+}
+#side-menu-switch:checked + .side-menu {
+	transform: translateX(0);
+}
+#side-menu-switch:checked + .side-menu label .fa-angle-right{
+	transform: scaleX(-1);
+} 
 #viewDiv {
 	padding: 0;
 	margin: 0;

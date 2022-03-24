@@ -66,6 +66,58 @@ table {
   height: 100%;
 }
 
+.side-menu {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
+  width: 350px;
+  height: 100%;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  background: #fff;
+  -webkit-box-shadow: 5px 0px 10px rgba(23, 23, 54, 0.6);
+          box-shadow: 5px 0px 10px rgba(23, 23, 54, 0.6);
+  -webkit-transform: translateX(-100%);
+          transform: translateX(-100%);
+  -webkit-transition: .3s;
+  transition: .3s;
+  padding: 10px;
+}
+
+.side-menu-switch__label {
+  position: absolute;
+  width: 40px;
+  height: 80px;
+  right: -40px;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  line-height: 80px;
+  text-align: center;
+  background-color: #000;
+  color: white;
+  font-size: 30px;
+  border-radius: 0 10px 10px 0;
+  -webkit-transition: .3s;
+  transition: .3s;
+}
+
+#side-menu-switch {
+  display: none;
+}
+
+#side-menu-switch:checked + .side-menu {
+  -webkit-transform: translateX(0);
+          transform: translateX(0);
+}
+
+#side-menu-switch:checked + .side-menu label .fa-angle-right {
+  -webkit-transform: scaleX(-1);
+          transform: scaleX(-1);
+}
+
 #viewDiv {
   padding: 0;
   margin: 0;
