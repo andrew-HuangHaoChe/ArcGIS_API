@@ -23,6 +23,9 @@ require(
 		"esri/widgets/ScaleBar",
 		"esri/geometry/Extent",
 		"esri/core/watchUtils",
+		"esri/widgets/Expand",
+		"esri/rest/query",
+		"esri/rest/support/Query",
 	],
 	function (
 		SketchViewModel,
@@ -48,6 +51,9 @@ require(
 		ScaleBar,
 		Extent,
 		watchUtils,
+		Expand,
+		query,
+		Query,
 	) {
 		const countyUrl = "https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{level}/{row}/{col}"
 		esriConfig.apiKey = "AAPK55baa15465db4dd8996a0910ba4a8ae2gg1flWiBmMpL9BDIdZgIgQuaibnyaEtjiIBqw7vs-ZjnUKiPXCz_sA1lyYOlrgB5";
@@ -121,8 +127,13 @@ require(
 		// })
 
 		// 元件-------------------------------
+
 		const layerList = new LayerList({ // 圖層切換list
 			view: view
+		});
+		const layerListExpand = new Expand({
+			view: view,
+			content: layerList,
 		});
 		const bmToggleWidget = new BasemapToggle({
 			view: view,
@@ -172,7 +183,7 @@ require(
 				params.requestOptions.query.token = "1jEODLnMEyMKmcJR-uO_sbCZMHnP0uMD7OxDrOZi0OtgZzais3KwQ6z9AVjjQbCv";
 			},
 		});
-		const townLayer = new MapImageLayer({
+		const district = new MapImageLayer({
 			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/MOI_district/MapServer/",
 			sublayers: [{
 				id: 1,
@@ -183,7 +194,11 @@ require(
 			sublayers: [{
 				id: 12,
 			}]
-		})
+		});
+		const featureDistrict = new FeatureLayer({
+			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/MOI_district/MapServer/0",
+			// outFields: ["NAME", "GEOID"],
+		});
 		const fireBrigadeLayer = new FeatureLayer({
 			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/11"
 		});
@@ -196,7 +211,8 @@ require(
 		// 元件.add----------------------------
 		view.ui.add(scaleBar, "bottom-left");
 		view.ui.add(ccWidget, "bottom-left");
-		view.ui.add(layerList, "top-right");
+		// view.ui.add(layerList, "top-right");
+		view.ui.add(layerListExpand, "top-right");
 		view.ui.add(homeWidget, "top-right");
 		view.ui.add(locateWidget, "top-right");
 		view.ui.add(bmToggleWidget, "bottom-right");
@@ -204,7 +220,8 @@ require(
 		view.ui.remove("zoom"); // 地圖預設的zoom刪除
 		// 圖層.add----------------------------
 		map.add(countyLayer);
-		map.add(townLayer);
+		map.add(district);
+		map.add(featureDistrict);
 		map.add(policeLayer);
 		map.add(nuclearLayer);
 		map.add(fireBrigadeLayer);
@@ -232,7 +249,8 @@ require(
 			title: "Graphics information in {NAME}",
 			content: graphicChange
 		};
-		function graphicChange (graphicId, graphicType, graphicMappoint) {
+
+		function graphicChange(graphicId, graphicType, graphicMappoint) {
 			console.log(graphicType);
 			let graphicContent = document.createElement("div");
 			graphicContent.innerHTML = `
@@ -249,7 +267,8 @@ require(
 		}
 		tempGraphicsLayer.popupTemplate = popupTemplate;
 		view.when(function () {
-			var sketchViewModel = new SketchViewModel({
+			view.ui.add("optionsDiv", "bottom-right");
+			const sketchViewModel = new SketchViewModel({
 				view: view,
 				layer: tempGraphicsLayer,
 				pointSymbol: { // 點圖形樣式
@@ -301,16 +320,6 @@ require(
 				if (event.state === "complete") {
 					const lat = event.graphic.geometry.latitude;
 					const lng = event.graphic.geometry.longitude;
-					// console.log(view.popup);
-					// console.log(event);
-					// view.popup.open({
-					// 	title: "test123",
-					// 	content: `<p>GraphicID: ${event.graphic.uid}</p>`,
-					// 	location: [lat, lng]
-					// })
-					// console.log(event);
-					// view.popup.features = [event.graphic]
-					// view.popup.visible = true
 				}
 			});
 			var drawPointButton = document.getElementById("pointButton");
@@ -356,6 +365,20 @@ require(
 				setActiveButton();
 			};
 
+			axios.get("https://api.nlsc.gov.tw/other/ListCounty")
+				.then((res) => {
+					let responseData = xmlConvertToJson(res.data);
+					responseData.countyItems.countyItem.forEach(item => {
+						let opt = document.createElement('option');
+						opt.textContent += item.countyname;
+						opt.value = item.countycode01;
+						document.getElementById("countySelect").appendChild(opt);
+					});
+				})
+				.catch((err) => {
+					alert("錯誤訊息:" + err);
+				})
+
 			function setActiveButton(selectedButton) {
 				view.focus();
 				var elements = document.getElementsByClassName("active");
@@ -366,5 +389,30 @@ require(
 					selectedButton.classList.add("active");
 				}
 			}
+
+			function xmlConvertToJson(xmlData) {
+				let x2js = new X2JS();
+				let json = x2js.xml_str2json(xmlData);
+				return json;
+			}
+		});
+		let graphics;
+		view.whenLayerView(featureDistrict).then(function (layerView) {
+			layerView.watch("updating", function (value) {
+				if (!value) {
+					layerView
+						.queryFeatures({
+							geometry: view.extent,
+							returnGeometry: true,
+							// orderByFields: ["GEOID"]
+						})
+						.then(function (results) {
+							console.log(results);
+							// do something with the resulting graphics
+							graphics = results.features;
+							console.log(graphics);
+						});
+				}
+			});
 		});
 	});
