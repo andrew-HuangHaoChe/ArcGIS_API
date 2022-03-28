@@ -12,28 +12,65 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.26.1/axios.min.js"
 		integrity="sha512-bPh3uwgU5qEMipS/VOmRqynnMXGGSRv+72H/N260MQeXZIK4PG48401Bsby9Nq5P5fz7hy5UGNmC/W1Z51h2GQ=="
 		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/x2js/1.2.0/xml2json.min.js" integrity="sha512-HX+/SvM7094YZEKOCtG9EyjRYvK8dKlFhdYAnVCGNxMkA59BZNSZTZrqdDlLXp0O6/NjDb1uKnmutUeuzHb3iQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/x2js/1.2.0/xml2json.min.js"
+		integrity="sha512-HX+/SvM7094YZEKOCtG9EyjRYvK8dKlFhdYAnVCGNxMkA59BZNSZTZrqdDlLXp0O6/NjDb1uKnmutUeuzHb3iQ=="
+		crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/1.3.1/proj4.js" integrity="sha512-HPIkVeN4JL8hrWD1Mov+imhpp5AKR8ZnWYMeKOIg13HVSIZoq3TzFbXqMiJ0Ic5r9B0a/z3+MWd/H55MM9qycw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 	<link rel="stylesheet" href="../asset/css/index.css">
 	<link rel="stylesheet" href="https://js.arcgis.com/4.22/esri/themes/light/main.css">
 	<script src="https://js.arcgis.com/4.22/"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
 		integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g=="
 		crossorigin="anonymous" referrerpolicy="no-referrer" />
-	<script src="./js/main.js"></script>
+	<script src="./js/helper/helper.js"></script>
 </head>
 
 <body>
 	<div class="map">
-		<!-- <input type="checkbox" name="" id="side-menu-switch">
+		<input type="checkbox" name="" id="side-menu-switch">
 		<nav class="side-menu">
-			<select class="county-menu">
-				<option id="city" value=""></option>
-				<option id="district" value=""></option>
-			</select>
-			<label class="side-menu-switch__label" for="side-menu-switch">
+			<div class="switch__container">
+				<input id="switch-shadow" class="switch switch--shadow" type="checkbox" onclick="toggleLocateInfo()">
+				<label for="switch-shadow"></label>
+			</div>
+			<label class="side-menu-switch__label" for="side-menu-switch" onclick="checkInfo()">
 				<i class="fa-solid fa-angle-right"></i>
 			</label>
-		</nav> -->
+			<div class="side-menu__content">
+				<div class="locate__content"></div>
+				<div class="coordinate-transform">
+					<div class="coordinate-transform__block coordinate-transform__x">
+						<p>X:</p><input type="text">
+					</div>
+					<div class="coordinate-transform__block coordinate-transform__y">
+						<p>Y:</p><input type="text">
+					</div>
+					<div class="coordinate-transform__block coordinate-transform__lng">
+						<p>經度(longitude):</p><input type="text">
+					</div>
+					<div class="coordinate-transform__block coordinate-transform__lat">
+						<p>緯度(latitude):</p><input type="text">
+					</div>
+					<button class="transform-btn" onclick="transformWGS()">轉換</button>
+					<div class="transform-result">
+						<h5>TWD97二度分帶座標(本島121):</h5>
+						<p class="transform-result__121"></p>
+					</div>
+					<div class="transform-result">
+						<h5>TWD97二度分帶座標(離島119):</h5>
+						<p class="transform-result__119"></p>
+					</div>
+					<div class="transform-result">
+						<h5>EPSG:3857:</h5>
+						<p class="transform-result__3857"></p>
+					</div>
+					<div class="transform-result">
+						<h5>EPSG:3824:</h5>
+						<p class="transform-result__3824"></p>
+					</div>
+				</div>
+			</div>
+		</nav>
 		<div id="viewDiv">
 			<div class="zoom-widget"></div>
 			<div id="SRTM_Color_Index"></div>
@@ -50,14 +87,25 @@
 					title="Clear graphics"></button>
 			</div>
 		</div>
+		<!-- custom widget start -->
 		<div class="esri-widget" id="optionsDiv">
 			<select class="esri-widget" id="countySelect">
 			</select>
 		</div>
+		<div id="infoDiv">
+			<input
+			  class="esri-component esri-widget--button esri-widget esri-interactive"
+			  type="button"
+			  id="switch-btn"
+			  value="3D"
+			/>
+		</div>
+		<!-- custom widget end -->
 		<footer id="footer">
 			<div id="outputMessages" class="esri-widget"></div>
 		</footer>
 	</div>
+	<script src="./js/main.js"></script>
 </body>
 
 </html>
