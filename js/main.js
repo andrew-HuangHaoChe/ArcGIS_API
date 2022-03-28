@@ -68,22 +68,6 @@ require(
 		const districtUrl = "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/MOI_district/MapServer/";
 		esriConfig.apiKey = "AAPK55baa15465db4dd8996a0910ba4a8ae2gg1flWiBmMpL9BDIdZgIgQuaibnyaEtjiIBqw7vs-ZjnUKiPXCz_sA1lyYOlrgB5";
 		var params;
-		const appConfig = {
-			mapView: null,
-			sceneView: null,
-			activeView: null,
-			container: "viewDiv" // use same container for views
-		};
-		const initialViewParams = {
-			zoom: 7,
-			center: [121, 23.5],
-			container: appConfig.container,
-			highlightOptions: {
-				color: [255, 241, 58],
-				fillOpacity: 0.4
-			},
-			map: map,
-		};
 		const tempGraphicsLayer = new GraphicsLayer({
 			title: "sketch圖層"
 		});
@@ -101,53 +85,69 @@ require(
 				fillOpacity: 0.4
 			},
 		});
+		const appConfig = {
+			mapView: null,
+			sceneView: null,
+			activeView: null,
+			container: "viewDiv" // use same container for views
+		};
+		// const initialViewParams = {
+		// 	zoom: 7,
+		// 	center: [121, 23.5],
+		// 	container: appConfig.container,
+		// 	highlightOptions: {
+		// 		color: [255, 241, 58],
+		// 		fillOpacity: 0.4
+		// 	},
+		// 	map: map,
+		// };
 		// create 2D view and and set active
-		appConfig.mapView = createView(initialViewParams, "2d");
-		appConfig.mapView.map = webmap;
-		appConfig.activeView = appConfig.mapView;
+		// appConfig.mapView = createView(initialViewParams, "2d");
+		// appConfig.mapView.map = webmap;
+		// appConfig.activeView = appConfig.mapView;
 
 		// create 3D view, won't initialize until container is set
-		initialViewParams.container = null;
-		initialViewParams.map = scene;
-		appConfig.sceneView = createView(initialViewParams, "3d");
+		// initialViewParams.container = null;
+		// initialViewParams.map = scene;
+		// appConfig.sceneView = createView(initialViewParams, "3d");
 
 		// switch the view between 2D and 3D each time the button is clicked
-		switchButton.addEventListener("click", () => {
-			switchView();
-		});
+		// switchButton.addEventListener("click", () => {
+		// 	switchView();
+		// });
 		// Switches the view from 2D to 3D and vice versa
-		function switchView() {
-			const is3D = appConfig.activeView.type === "3d";
-			const activeViewpoint = appConfig.activeView.viewpoint.clone();
+		// function switchView() {
+		// 	const is3D = appConfig.activeView.type === "3d";
+		// 	const activeViewpoint = appConfig.activeView.viewpoint.clone();
 
-			// remove the reference to the container for the previous view
-			appConfig.activeView.container = null;
+		// 	// remove the reference to the container for the previous view
+		// 	appConfig.activeView.container = null;
 
-			if (is3D) {
-				// if the input view is a SceneView, set the viewpoint on the
-				// mapView instance. Set the container on the mapView and flag
-				// it as the active view
-				appConfig.mapView.viewpoint = activeViewpoint;
-				appConfig.mapView.container = appConfig.container;
-				appConfig.activeView = appConfig.mapView;
-				switchButton.value = "3D";
-			} else {
-				appConfig.sceneView.viewpoint = activeViewpoint;
-				appConfig.sceneView.container = appConfig.container;
-				appConfig.activeView = appConfig.sceneView;
-				switchButton.value = "2D";
-			}
-		}
-		function createView(params, type) {
-			let view;
-			if (type === "2d") {
-				view = new MapView(params);
-				return view;
-			} else {
-				view = new SceneView(params);
-			}
-			return view;
-		}
+		// 	if (is3D) {
+		// 		// if the input view is a SceneView, set the viewpoint on the
+		// 		// mapView instance. Set the container on the mapView and flag
+		// 		// it as the active view
+		// 		appConfig.mapView.viewpoint = activeViewpoint;
+		// 		appConfig.mapView.container = appConfig.container;
+		// 		appConfig.activeView = appConfig.mapView;
+		// 		switchButton.value = "3D";
+		// 	} else {
+		// 		appConfig.sceneView.viewpoint = activeViewpoint;
+		// 		appConfig.sceneView.container = appConfig.container;
+		// 		appConfig.activeView = appConfig.sceneView;
+		// 		switchButton.value = "2D";
+		// 	}
+		// }
+		// function createView(params, type) {
+		// 	let view;
+		// 	if (type === "2d") {
+		// 		view = new MapView(params);
+		// 		return view;
+		// 	} else {
+		// 		view = new SceneView(params);
+		// 	}
+		// 	return view;
+		// }
 		// view視角變化取得x y 最大&&最小值
 		watchUtils.whenTrue(view, "stationary", () => {
 			// Get the new center of the view only when view is stationary.
