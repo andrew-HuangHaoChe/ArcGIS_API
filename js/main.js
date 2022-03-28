@@ -11,7 +11,7 @@ require(
 		"esri/widgets/Locate",
 		"esri/widgets/Track",
 		"esri/views/ui/UI",
-		"esri/widgets/BasemapToggle",
+		// "esri/widgets/BasemapToggle",
 		"esri/widgets/Zoom",
 		"esri/widgets/Home",
 		"esri/layers/TileLayer",
@@ -26,6 +26,10 @@ require(
 		"esri/widgets/Expand",
 		"esri/rest/query",
 		"esri/rest/support/Query",
+		"esri/rest/identify",
+		"esri/rest/support/IdentifyParameters",
+		"esri/views/layers/LayerView",
+		"esri/WebScene",
 	],
 	function (
 		SketchViewModel,
@@ -39,7 +43,7 @@ require(
 		Locate,
 		Track,
 		UI,
-		BasemapToggle,
+		// BasemapToggle,
 		Zoom,
 		Home,
 		TileLayer,
@@ -54,10 +58,35 @@ require(
 		Expand,
 		query,
 		Query,
+		identify,
+		IdentifyParameters,
+		LayerView,
+		WebScene,
 	) {
-		const countyUrl = "https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{level}/{row}/{col}"
+		// https://wmts.nlsc.gov.tw/wmts/EMAP2/default/GoogleMapsCompatible/{level}/{row}/{col}
+		const countyUrl = "https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{level}/{row}/{col}";
+		const districtUrl = "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/MOI_district/MapServer/";
 		esriConfig.apiKey = "AAPK55baa15465db4dd8996a0910ba4a8ae2gg1flWiBmMpL9BDIdZgIgQuaibnyaEtjiIBqw7vs-ZjnUKiPXCz_sA1lyYOlrgB5";
-		const tempGraphicsLayer = new GraphicsLayer();
+		var params;
+		const appConfig = {
+			mapView: null,
+			sceneView: null,
+			activeView: null,
+			container: "viewDiv" // use same container for views
+		};
+		const initialViewParams = {
+			zoom: 7,
+			center: [121, 23.5],
+			container: appConfig.container,
+			highlightOptions: {
+				color: [255, 241, 58],
+				fillOpacity: 0.4
+			},
+			map: map,
+		};
+		const tempGraphicsLayer = new GraphicsLayer({
+			title: "sketch圖層"
+		});
 		const map = new Map({
 			basemap: "satellite", // Basemap layer service
 			// layers: [tempGraphicsLayer]
@@ -66,8 +95,59 @@ require(
 			container: "viewDiv",
 			map: map,
 			center: [121, 23.5],
-			zoom: 7
+			zoom: 7,
+			highlightOptions: {
+				color: [255, 241, 58],
+				fillOpacity: 0.4
+			},
 		});
+		// create 2D view and and set active
+		appConfig.mapView = createView(initialViewParams, "2d");
+		appConfig.mapView.map = webmap;
+		appConfig.activeView = appConfig.mapView;
+
+		// create 3D view, won't initialize until container is set
+		initialViewParams.container = null;
+		initialViewParams.map = scene;
+		appConfig.sceneView = createView(initialViewParams, "3d");
+
+		// switch the view between 2D and 3D each time the button is clicked
+		switchButton.addEventListener("click", () => {
+			switchView();
+		});
+		// Switches the view from 2D to 3D and vice versa
+		function switchView() {
+			const is3D = appConfig.activeView.type === "3d";
+			const activeViewpoint = appConfig.activeView.viewpoint.clone();
+
+			// remove the reference to the container for the previous view
+			appConfig.activeView.container = null;
+
+			if (is3D) {
+				// if the input view is a SceneView, set the viewpoint on the
+				// mapView instance. Set the container on the mapView and flag
+				// it as the active view
+				appConfig.mapView.viewpoint = activeViewpoint;
+				appConfig.mapView.container = appConfig.container;
+				appConfig.activeView = appConfig.mapView;
+				switchButton.value = "3D";
+			} else {
+				appConfig.sceneView.viewpoint = activeViewpoint;
+				appConfig.sceneView.container = appConfig.container;
+				appConfig.activeView = appConfig.sceneView;
+				switchButton.value = "2D";
+			}
+		}
+		function createView(params, type) {
+			let view;
+			if (type === "2d") {
+				view = new MapView(params);
+				return view;
+			} else {
+				view = new SceneView(params);
+			}
+			return view;
+		}
 		// view視角變化取得x y 最大&&最小值
 		watchUtils.whenTrue(view, "stationary", () => {
 			// Get the new center of the view only when view is stationary.
@@ -135,10 +215,10 @@ require(
 			view: view,
 			content: layerList,
 		});
-		const bmToggleWidget = new BasemapToggle({
-			view: view,
-			nextBasemap: "hybrid"
-		});
+		// const bmToggleWidget = new BasemapToggle({
+		// 	view: view,
+		// 	nextBasemap: "hybrid"
+		// });
 		const locateWidget = new Locate({
 			view: view,
 			useHeadingEnabled: false,
@@ -176,6 +256,7 @@ require(
 		// 圖層-------------------------------
 		const countyLayer = new WebTileLayer({
 			urlTemplate: countyUrl,
+			title: "縣市圖層",
 		});
 		esriConfig.request.interceptors.push({
 			urls: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR",
@@ -184,90 +265,73 @@ require(
 			},
 		});
 		const district = new MapImageLayer({
-			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/MOI_district/MapServer/",
+			url: districtUrl,
 			sublayers: [{
 				id: 1,
-			}]
+				popupTemplate: {
+					outFields: ["*"],
+					content: getDistrictInfo
+				}
+			}],
+			title: "行政區圖層",
 		});
 		const policeLayer = new MapImageLayer({
 			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/",
 			sublayers: [{
 				id: 12,
-			}]
+			}],
+			title: "警局圖層",
 		});
-		const featureDistrict = new FeatureLayer({
+		const countyFeatureLayer = new FeatureLayer({
 			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/MOI_district/MapServer/0",
 			// outFields: ["NAME", "GEOID"],
+			title: "縣市分界圖層",
 		});
 		const fireBrigadeLayer = new FeatureLayer({
-			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/11"
+			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/11",
+			title: "消防隊圖層"
 		});
 		const hospitalLayer = new FeatureLayer({
-			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/2"
+			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/2",
+			title: "醫院圖層"
 		});
 		const nuclearLayer = new WMSLayer({
-			url: "https://dwgis.ncdr.nat.gov.tw/arcgis/services/ncdr/PowerPlant/MapServer/WmsServer"
+			url: "https://dwgis.ncdr.nat.gov.tw/arcgis/services/ncdr/PowerPlant/MapServer/WmsServer",
+			title: "核電廠圖層"
 		});
 		// 元件.add----------------------------
-		view.ui.add(scaleBar, "bottom-left");
-		view.ui.add(ccWidget, "bottom-left");
+		view.ui.add(scaleBar, "bottom-right");
+		view.ui.add(ccWidget, "bottom-right");
 		// view.ui.add(layerList, "top-right");
 		view.ui.add(layerListExpand, "top-right");
 		view.ui.add(homeWidget, "top-right");
 		view.ui.add(locateWidget, "top-right");
-		view.ui.add(bmToggleWidget, "bottom-right");
+		// view.ui.add(bmToggleWidget, "bottom-right");
 		view.ui.add(zoomWidget, "top-right"); // 加入自定義的zoom
 		view.ui.remove("zoom"); // 地圖預設的zoom刪除
 		// 圖層.add----------------------------
 		map.add(countyLayer);
 		map.add(district);
-		map.add(featureDistrict);
+		map.add(countyFeatureLayer);
 		map.add(policeLayer);
 		map.add(nuclearLayer);
 		map.add(fireBrigadeLayer);
 		map.add(hospitalLayer);
 		map.add(tempGraphicsLayer);
 		//-------------------------------------
-		view.on("click", function (event) {
-			const screenPoint = {
-				x: event.x,
-				y: event.y
-			};
-			console.log(screenPoint);
-			view.hitTest(screenPoint).then(function (res) {
-				const graphic = res.results[0];
-				if (res.results.length && graphic.graphic) {
-					console.log(graphic);
-					let graphicId = graphic.graphic.uid;
-					let graphicType = graphic.graphic.geometry.type;
-					let graphicMappoint = graphic.mapPoint;
-					graphicChange(graphicId, graphicType, graphicMappoint);
-				}
-			})
-		});
-		const popupTemplate = {
-			title: "Graphics information in {NAME}",
-			content: graphicChange
-		};
 
-		function graphicChange(graphicId, graphicType, graphicMappoint) {
-			console.log(graphicType);
-			let graphicContent = document.createElement("div");
-			graphicContent.innerHTML = `
-				<p>GraphicID:${graphicId}</p>
-				<p>GraphType:${graphicType}</p>
-			`;
-			console.log(graphicContent);
-			view.popup.content = graphicContent;
-			view.popup.open({
-				title: `圖層${graphicId}`,
-				content: graphicContent,
-				location: graphicMappoint,
-			})
-		}
-		tempGraphicsLayer.popupTemplate = popupTemplate;
+
 		view.when(function () {
-			view.ui.add("optionsDiv", "bottom-right");
+			let layerArray = [district, countyFeatureLayer, policeLayer, nuclearLayer, fireBrigadeLayer, hospitalLayer, tempGraphicsLayer]; // 預設圖層關閉，減少雜亂顯示
+			layerArray.forEach(item => {
+				item.visible = false;
+			})
+			// view.ui.add("optionsDiv", "bottom-right");
+			view.ui.add({
+				component: "optionsDiv",
+				position: "bottom-right",
+				container: "footer"
+			});
 			const sketchViewModel = new SketchViewModel({
 				view: view,
 				layer: tempGraphicsLayer,
@@ -365,6 +429,163 @@ require(
 				setActiveButton();
 			};
 
+			function setActiveButton(selectedButton) {
+				view.focus();
+				var elements = document.getElementsByClassName("active");
+				for (var i = 0; i < elements.length; i++) {
+					elements[i].classList.remove("active");
+				}
+				if (selectedButton) {
+					selectedButton.classList.add("active");
+				}
+			}
+
+			const popupTemplate = {
+				title: "Graphics information in {NAME}",
+				content: graphicChange
+			};
+			tempGraphicsLayer.popupTemplate = popupTemplate;
+
+			function graphicChange(graphicId, graphicType, graphicMappoint) {
+				let date = Date.now();
+				let graphicContent = document.createElement("div");
+				graphicContent.innerHTML = `
+					<p>GraphicID:${date}</p>
+					<p>GraphType:${graphicType}</p>
+				`;
+				view.popup.content = graphicContent;
+				view.popup.open({
+					title: `圖層${graphicId}`,
+					content: graphicContent,
+					location: graphicMappoint,
+				})
+			}
+
+			view.on("click", function (event) {
+				console.log(event);
+				let xSpot = document.querySelector('.coordinate-transform__x input'); // 側邊選單XY input座標值
+				let ySpot = document.querySelector('.coordinate-transform__y input');
+				let lng = document.querySelector('.coordinate-transform__lng input'); // 經緯度欄位
+				let lat = document.querySelector('.coordinate-transform__lat input');
+				lng.value = event.mapPoint.longitude;
+				lat.value = event.mapPoint.latitude;
+				const screenPoint = {
+					x: event.x,
+					y: event.y
+				};
+				xSpot.value = event.x;
+				ySpot.value = event.y;
+				view.hitTest(screenPoint).then(function (res) {
+					const graphic = res.results[0];
+					if (res.results.length && graphic.graphic) {
+						console.log(graphic);
+						let graphicId = graphic.graphic.uid;
+						let graphicType = graphic.graphic.geometry.type;
+						let graphicMappoint = graphic.mapPoint;
+						graphicChange(graphicId, graphicType, graphicMappoint);
+					}
+				})
+				// 觸發executeIdentify函式處理Identify
+				executeIdentify(event);
+			});
+
+
+			params = new IdentifyParameters(); // 全域的params賦值
+			params.tolerance = 3;
+			params.layerIds = [0, 1, 2, 3, 4];
+			params.layerOption = "top";
+			params.width = view.width;
+			params.height = view.height;
+		});
+
+		let highlight;
+		view.whenLayerView(countyFeatureLayer)
+			.then(function (layerView) {
+				console.log(countyFeatureLayer.spatialReference.wkid);
+				let countySelectChange = document.getElementById("countySelect");
+				let query = layerView.createQuery();
+				countySelectChange.addEventListener("change", function () {
+					let changeValue = countySelectChange.value
+					query.where = "COUNTYCODE ='" + changeValue + "'";
+					query.outFields = ["*"];
+					query.returnGeometry = true;
+					query.outSpatialReference = {
+						wkid: 3857
+					}; //view.spatialReference;
+					query.returnQueryGeometry = true;
+					countyFeatureLayer.queryFeatures(query).then(function (result) {
+						console.log(result);
+						view.goTo(result.features[0].geometry);
+						if (highlight) {
+							highlight.remove();
+						}
+						highlight = layerView.highlight(result.features);
+					});
+				});
+
+				// let countySelectChange = document.getElementById("countySelect");
+				// countySelectChange.addEventListener("change", function () {
+				// 	let query = countyFeatureLayer.createQuery();
+				// 	let changeValue = countySelectChange.value
+				// 	query.where = "COUNTYCODE ='" + changeValue + "'";
+				// 	query.outFields = ["*"];
+				// 	query.returnGeometry = true;
+				// 	query.outSpatialReference = view.spatialReference; //{ wkid: 3857 };
+				// 	query.returnQueryGeometry = true;
+				// 	countyFeatureLayer.queryFeatures(query)
+				// 		.then(function (response) {
+				// 			console.log(response);
+				// 			if (!response.features) {
+				// 				return;
+				// 			}
+				// 			view.goTo(response.features[0].geometry);
+				// 		})
+				// })
+
+			})
+			.catch(function (error) {
+				console.log(error);
+			})
+
+		function getDistrictInfo(feature) {
+			let graphic, attributes;
+			let content = document.createElement("div");
+			graphic = feature.graphic;
+			attributes = feature.graphic.attributes;
+			for (let propertyName in attributes) {
+				var attrPropValue = `<p>${propertyName}:${attributes[propertyName]}</p>`;
+				content.innerHTML += attrPropValue;
+			}
+			return content;
+		}
+
+		function executeIdentify(event) {
+			let attributes;
+			// Set the geometry to the location of the view click
+			params.geometry = event.mapPoint;
+			params.mapExtent = view.extent;
+			identify.identify(districtUrl, params).then(function (response) {
+				if (response.results.length) {
+					attributes = response.results[0].feature.attributes;
+					document.querySelector(".locate__content").innerHTML = "";
+					var locateInfo = document.createElement("p");
+					Object.entries(attributes).forEach(([key, value]) => {
+						locateInfo.innerHTML += `
+							${key}: ${value} <br>
+						`;
+					});
+					document.querySelector(".locate__content").append(locateInfo);
+				}
+			})
+		}
+
+		function xmlConvertToJson(xmlData) {
+			let x2js = new X2JS();
+			let json = x2js.xml_str2json(xmlData);
+			return json;
+		}
+
+		function getCountyData() { // 縣市資料
 			axios.get("https://api.nlsc.gov.tw/other/ListCounty")
 				.then((res) => {
 					let responseData = xmlConvertToJson(res.data);
@@ -378,41 +599,44 @@ require(
 				.catch((err) => {
 					alert("錯誤訊息:" + err);
 				})
-
-			function setActiveButton(selectedButton) {
-				view.focus();
-				var elements = document.getElementsByClassName("active");
-				for (var i = 0; i < elements.length; i++) {
-					elements[i].classList.remove("active");
-				}
-				if (selectedButton) {
-					selectedButton.classList.add("active");
-				}
-			}
-
-			function xmlConvertToJson(xmlData) {
-				let x2js = new X2JS();
-				let json = x2js.xml_str2json(xmlData);
-				return json;
-			}
-		});
-		let graphics;
-		view.whenLayerView(featureDistrict).then(function (layerView) {
-			layerView.watch("updating", function (value) {
-				if (!value) {
-					layerView
-						.queryFeatures({
-							geometry: view.extent,
-							returnGeometry: true,
-							// orderByFields: ["GEOID"]
-						})
-						.then(function (results) {
-							console.log(results);
-							// do something with the resulting graphics
-							graphics = results.features;
-							console.log(graphics);
-						});
-				}
-			});
-		});
+		};
+		getCountyData();
 	});
+
+function toggleLocateInfo() {
+	let x = document.querySelector(".side-menu__content");
+	console.log(x.style.display);
+	console.log(123);
+	if (x.style.display === "none") {
+		x.style.display = "block";
+	} else {
+		x.style.display = "none";
+	}
+}
+
+function checkInfo() {
+	let locateContent = document.querySelector(".locate__content");
+	if (locateContent && locateContent.childNodes.length !== 0) {
+		document.getElementById("switch-shadow").checked = true;
+	} else {
+		document.querySelector('.switch--shadow').checked = false;
+	}
+}
+
+function transformWGS() {
+	let lng = document.querySelector(".coordinate-transform__lng input");
+	let lat = document.querySelector(".coordinate-transform__lat input");
+	console.log(lng.value, lat.value);
+	if (lng.value !== '' || lat.value !== '') {
+		let TWD97121 = helper.epsg4326to3826([lng.value, lat.value]);
+		let TWD97119 = helper.epsg4326to3825([lng.value, lat.value]);
+		let TWD3857 = helper.epsg4326to3857([lng.value, lat.value]);
+		let TWD3824 = helper.epsg4326to3824([lng.value, lat.value]);
+		document.querySelector(".transform-result__121").textContent = TWD97121[0] + " , " + TWD97121[1];
+		document.querySelector(".transform-result__119").textContent = TWD97119[0] + " , " + TWD97119[1];
+		document.querySelector(".transform-result__3857").textContent = TWD3857[0] + " , " + TWD3857[1];
+		document.querySelector(".transform-result__3824").textContent = TWD3824[0] + " , " + TWD3824[1];
+	} else {
+		alert("請填寫座標值，或點選地圖上任意位置以取得座標!!");
+	}
+}
