@@ -29,43 +29,55 @@
 	<div class="map">
 		<input type="checkbox" name="" id="side-menu-switch">
 		<nav class="side-menu">
-			<div class="switch__container">
-				<input id="switch-shadow" class="switch switch--shadow" type="checkbox" onclick="toggleLocateInfo()">
-				<label for="switch-shadow"></label>
-			</div>
-			<label class="side-menu-switch__label" for="side-menu-switch" onclick="checkInfo()">
+			<label class="side-menu-switch__label" for="side-menu-switch">
 				<i class="fa-solid fa-angle-right"></i>
 			</label>
 			<div class="side-menu__content">
 				<div class="locate__content"></div>
 				<div class="coordinate-transform">
 					<div class="coordinate-transform__block coordinate-transform__x">
-						<p>X:</p><input type="text">
+						<p>X:</p>
+						<div class="input-container">
+							<input type="text">
+							<div class="bar"></div>
+						</div>
 					</div>
 					<div class="coordinate-transform__block coordinate-transform__y">
-						<p>Y:</p><input type="text">
+						<p>Y:</p>
+						<div class="input-container">
+							<input type="text">
+							<div class="bar"></div>
+						</div>
 					</div>
 					<div class="coordinate-transform__block coordinate-transform__lng">
-						<p>經度(longitude):</p><input type="text">
+						<p>經度(longitude):</p>
+						<div class="input-container">
+							<input type="text">
+							<div class="bar"></div>
+						</div>
 					</div>
 					<div class="coordinate-transform__block coordinate-transform__lat">
-						<p>緯度(latitude):</p><input type="text">
+						<p>緯度(latitude):</p>
+						<div class="input-container">
+							<input type="text">
+							<div class="bar"></div>
+						</div>
 					</div>
 					<button class="transform-btn" onclick="transformWGS()">轉換</button>
 					<div class="transform-result">
-						<h5>TWD97二度分帶座標(本島121):</h5>
+						<button value="epsg4326to3826" onclick="transformCoordinate(value)">TWD97二度分帶座標(本島121):</button>
 						<p class="transform-result__121"></p>
 					</div>
 					<div class="transform-result">
-						<h5>TWD97二度分帶座標(離島119):</h5>
+						<button value="epsg4326to3825" onclick="transformCoordinate(value)">TWD97二度分帶座標(離島119):</button>
 						<p class="transform-result__119"></p>
 					</div>
 					<div class="transform-result">
-						<h5>EPSG:3857:</h5>
+						<button value="epsg4326to3857" onclick="transformCoordinate(value)">EPSG:3857:</button>
 						<p class="transform-result__3857"></p>
 					</div>
 					<div class="transform-result">
-						<h5>EPSG:3824:</h5>
+						<button value="epsg4326to3824" onclick="transformCoordinate(value)">EPSG:3824:</button>
 						<p class="transform-result__3824"></p>
 					</div>
 				</div>
@@ -88,7 +100,12 @@
 			</div>
 		</div>
 		<!-- custom widget start -->
-		<div class="esri-widget" id="optionsDiv">
+		<div class="switch__container" id="switchIdentify">
+			<h3>啟用/停用地區資訊</h3>
+			<input id="switch-shadow" class="switch switch--shadow" type="checkbox" onclick="toggleLocateInfo()">
+			<label for="switch-shadow"></label>
+		</div>
+		<div id="optionsDiv">
 			<select class="esri-widget" id="countySelect">
 			</select>
 		</div>
@@ -100,10 +117,11 @@
 			  value="3D"
 			/>
 		</div>
-		<!-- custom widget end -->
-		<footer id="footer">
+		<div id="footer">
 			<div id="outputMessages" class="esri-widget"></div>
-		</footer>
+			<div class="custom-widget-container"></div>
+		</div>
+		<!-- custom widget end -->
 	</div>
 	<script src="./js/main.js"></script>
 </body>

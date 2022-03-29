@@ -1,3 +1,6 @@
+const data = {
+	isActive: false,
+}
 require(
 	[
 		"esri/widgets/Sketch/SketchViewModel",
@@ -30,6 +33,8 @@ require(
 		"esri/rest/support/IdentifyParameters",
 		"esri/views/layers/LayerView",
 		"esri/WebScene",
+		"esri/WebMap",
+		"esri/layers/GeoJSONLayer",
 	],
 	function (
 		SketchViewModel,
@@ -62,6 +67,8 @@ require(
 		IdentifyParameters,
 		LayerView,
 		WebScene,
+		WebMap,
+		GeoJSONLayer,
 	) {
 		// https://wmts.nlsc.gov.tw/wmts/EMAP2/default/GoogleMapsCompatible/{level}/{row}/{col}
 		const countyUrl = "https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{level}/{row}/{col}";
@@ -73,106 +80,119 @@ require(
 		});
 		const map = new Map({
 			basemap: "satellite", // Basemap layer service
-			// layers: [tempGraphicsLayer]
 		});
-		const view = new MapView({
-			container: "viewDiv",
-			map: map,
-			center: [121, 23.5],
-			zoom: 7,
-			highlightOptions: {
-				color: [255, 241, 58],
-				fillOpacity: 0.4
-			},
-		});
-		const appConfig = {
-			mapView: null,
-			sceneView: null,
-			activeView: null,
-			container: "viewDiv" // use same container for views
-		};
-		// const initialViewParams = {
-		// 	zoom: 7,
+		// const view = new MapView({
+		// 	container: "viewDiv",
+		// 	map: map,
 		// 	center: [121, 23.5],
-		// 	container: appConfig.container,
+		// 	zoom: 7,
 		// 	highlightOptions: {
 		// 		color: [255, 241, 58],
 		// 		fillOpacity: 0.4
 		// 	},
-		// 	map: map,
-		// };
+		// });
+		const appConfig = {
+			mapView: new MapView({
+				zoom: 7,
+				center: [121, 23.5],
+				highlightOptions: {
+					color: [255, 241, 58],
+					fillOpacity: 0.4
+				},
+				container: "viewDiv",
+				map: map,
+			}),
+			sceneView: null,
+			activeView: null,
+			// container: "viewDiv" // use same container for views
+		};
+		const initialViewParams = {
+			zoom: 7,
+			center: [121, 23.5],
+			highlightOptions: {
+				color: [255, 241, 58],
+				fillOpacity: 0.4
+			},
+			container: appConfig.container,
+			map: map,
+		};
+		const switchButton = document.getElementById("switch-btn");
+
+
 		// create 2D view and and set active
 		// appConfig.mapView = createView(initialViewParams, "2d");
 		// appConfig.mapView.map = webmap;
 		// appConfig.activeView = appConfig.mapView;
 
 		// create 3D view, won't initialize until container is set
-		// initialViewParams.container = null;
+		initialViewParams.container = null;
 		// initialViewParams.map = scene;
 		// appConfig.sceneView = createView(initialViewParams, "3d");
 
 		// switch the view between 2D and 3D each time the button is clicked
-		// switchButton.addEventListener("click", () => {
-		// 	switchView();
-		// });
+		switchButton.addEventListener("click", () => {
+			switchView();
+		});
 		// Switches the view from 2D to 3D and vice versa
-		// function switchView() {
-		// 	const is3D = appConfig.activeView.type === "3d";
-		// 	const activeViewpoint = appConfig.activeView.viewpoint.clone();
+		function switchView() {
+			const is3D = appConfig.activeView.type === "3d";
+			const activeViewpoint = appConfig.activeView.viewpoint.clone();
 
-		// 	// remove the reference to the container for the previous view
-		// 	appConfig.activeView.container = null;
+			// remove the reference to the container for the previous view
+			appConfig.activeView.container = null;
 
-		// 	if (is3D) {
-		// 		// if the input view is a SceneView, set the viewpoint on the
-		// 		// mapView instance. Set the container on the mapView and flag
-		// 		// it as the active view
-		// 		appConfig.mapView.viewpoint = activeViewpoint;
-		// 		appConfig.mapView.container = appConfig.container;
-		// 		appConfig.activeView = appConfig.mapView;
-		// 		switchButton.value = "3D";
-		// 	} else {
-		// 		appConfig.sceneView.viewpoint = activeViewpoint;
-		// 		appConfig.sceneView.container = appConfig.container;
-		// 		appConfig.activeView = appConfig.sceneView;
-		// 		switchButton.value = "2D";
-		// 	}
-		// }
-		// function createView(params, type) {
-		// 	let view;
-		// 	if (type === "2d") {
-		// 		view = new MapView(params);
-		// 		return view;
-		// 	} else {
-		// 		view = new SceneView(params);
-		// 	}
-		// 	return view;
-		// }
+			if (is3D) {
+				// if the input view is a SceneView, set the viewpoint on the
+				// mapView instance. Set the container on the mapView and flag
+				// it as the active view
+				appConfig.mapView.viewpoint = activeViewpoint;
+				appConfig.mapView.container = appConfig.container;
+				appConfig.activeView = appConfig.mapView;
+				switchButton.value = "3D";
+			} else {
+				appConfig.sceneView.viewpoint = activeViewpoint;
+				appConfig.sceneView.container = appConfig.container;
+				appConfig.activeView = appConfig.sceneView;
+				switchButton.value = "2D";
+			}
+		}
+
+		function createView(params, type) {
+			let view;
+			if (type === "2d") {
+				view = new MapView(params);
+				return view;
+			} else {
+				view = new SceneView(params);
+			}
+			return view;
+		}
 		// view視角變化取得x y 最大&&最小值
-		watchUtils.whenTrue(view, "stationary", () => {
+		watchUtils.whenTrue(appConfig.mapView, "stationary", () => {
 			// Get the new center of the view only when view is stationary.
-			if (view.center) {
+			if (appConfig.mapView.center) {
 				const info = `
 					<span> the view center changed. </span>
-					x: ${view.center.x.toFixed(2)}
-					y: ${view.center.y.toFixed(2)}
+					x: ${appConfig.mapView.center.x.toFixed(2)}
+					y: ${appConfig.mapView.center.y.toFixed(2)}
 				`;
 				displayMessage(info);
 			}
 			// Get the new extent of the view only when view is stationary.
-			if (view.extent) {
+			if (appConfig.mapView.extent) {
 				const info = `
 					<span> the view extent changed: </span>
-					<br> xmin: ${view.extent.xmin.toFixed(2)}
-					xmax: ${view.extent.xmax.toFixed(2)}
-					<br> ymin: ${view.extent.ymin.toFixed(2)}
-					ymax: ${view.extent.ymax.toFixed(2)}
+					<br> xmin: ${appConfig.mapView.extent.xmin.toFixed(2)}
+					xmax: ${appConfig.mapView.extent.xmax.toFixed(2)}
+					<br> ymin: ${appConfig.mapView.extent.ymin.toFixed(2)}
+					ymax: ${appConfig.mapView.extent.ymax.toFixed(2)}
 				`;
 				displayMessage(info);
 			}
 		});
 
 		function displayMessage(info) {
+			const outputMessages = document.getElementById("outputMessages");
 			outputMessages.innerHTML = info;
 			outputMessages.scrollTop = outputMessages.scrollHeight;
 		}
@@ -206,21 +226,19 @@ require(
 		// 	document.getElementById("footer").append(coordsWidget);
 		// })
 
-		// 元件-------------------------------
+		// appConfig.mapView.when(function () {
 
+		// });
+		// 元件-------------------------------
 		const layerList = new LayerList({ // 圖層切換list
-			view: view
+			view: appConfig.mapView
 		});
 		const layerListExpand = new Expand({
-			view: view,
+			view: appConfig.mapView,
 			content: layerList,
 		});
-		// const bmToggleWidget = new BasemapToggle({
-		// 	view: view,
-		// 	nextBasemap: "hybrid"
-		// });
 		const locateWidget = new Locate({
-			view: view,
+			view: appConfig.mapView,
 			useHeadingEnabled: false,
 			graphic: new Graphic({
 				symbol: {
@@ -239,18 +257,18 @@ require(
 			}
 		});
 		const zoomWidget = new Zoom({
-			view: view,
+			view: appConfig.mapView,
 			container: "zoom-widget"
 		});
 		const homeWidget = new Home({
-			view: view
+			view: appConfig.mapView
 		});
 		const ccWidget = new CoordinateConversion({
-			view: view,
+			view: appConfig.mapView,
 			container: "footer"
 		});
 		const scaleBar = new ScaleBar({
-			view: view,
+			view: appConfig.mapView,
 			container: "footer",
 		});
 		// 圖層-------------------------------
@@ -295,20 +313,71 @@ require(
 			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/2",
 			title: "醫院圖層"
 		});
+		const earthquakeLayer = new GeoJSONLayer({
+			url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
+			title: "地震圖層",
+			id: "6",
+			customParameters: {
+				format: "geojson",
+				minmagnitude: 1,
+				alertlevel: "red",
+			},
+			outFields: ["*"],
+			// renderer: { // apply unique values to alert levels
+			// 	type: "unique-value",
+			// 	field: "alert",
+			// 	uniqueValueInfos: [{
+			// 			value: "red",
+			// 			symbol: createQuakeSymbol("red")
+			// 		},
+			// 		{
+			// 			value: "orange",
+			// 			symbol: createQuakeSymbol("orange")
+			// 		},
+			// 		{
+			// 			value: "yellow",
+			// 			symbol: createQuakeSymbol("yellow")
+			// 		},
+			// 		{
+			// 			value: "green",
+			// 			symbol: createQuakeSymbol("#136d15")
+			// 		}
+			// 	],
+			// 	visualVariables: [{
+			// 		type: "size",
+			// 		field: "mag",
+			// 		stops: [{
+			// 				value: 3,
+			// 				size: "4px",
+			// 				color: "yellow"
+			// 			},
+			// 			{
+			// 				value: 6,
+			// 				size: "20px"
+			// 			},
+			// 			{
+			// 				value: 7,
+			// 				size: "40px",
+			// 				color: "red"
+			// 			}
+			// 		]
+			// 	}]
+			// },
+		});
 		const nuclearLayer = new WMSLayer({
 			url: "https://dwgis.ncdr.nat.gov.tw/arcgis/services/ncdr/PowerPlant/MapServer/WmsServer",
 			title: "核電廠圖層"
 		});
-		// 元件.add----------------------------
-		view.ui.add(scaleBar, "bottom-right");
-		view.ui.add(ccWidget, "bottom-right");
+		// 元件.add-view.ui.add---------------------------
+		(scaleBar, "bottom-right");
+		appConfig.mapView.ui.add(ccWidget, "bottom-right");
 		// view.ui.add(layerList, "top-right");
-		view.ui.add(layerListExpand, "top-right");
-		view.ui.add(homeWidget, "top-right");
-		view.ui.add(locateWidget, "top-right");
+		appConfig.mapView.ui.add(layerListExpand, "top-right");
+		appConfig.mapView.ui.add(homeWidget, "top-right");
+		appConfig.mapView.ui.add(locateWidget, "top-right");
 		// view.ui.add(bmToggleWidget, "bottom-right");
-		view.ui.add(zoomWidget, "top-right"); // 加入自定義的zoom
-		view.ui.remove("zoom"); // 地圖預設的zoom刪除
+		appConfig.mapView.ui.add(zoomWidget, "top-right"); // 加入自定義的zoom
+		appConfig.mapView.ui.remove("zoom"); // 地圖預設的zoom刪除
 		// 圖層.add----------------------------
 		map.add(countyLayer);
 		map.add(district);
@@ -318,190 +387,192 @@ require(
 		map.add(fireBrigadeLayer);
 		map.add(hospitalLayer);
 		map.add(tempGraphicsLayer);
+		map.add(earthquakeLayer);
 		//-------------------------------------
-
-
-		view.when(function () {
-			let layerArray = [district, countyFeatureLayer, policeLayer, nuclearLayer, fireBrigadeLayer, hospitalLayer, tempGraphicsLayer]; // 預設圖層關閉，減少雜亂顯示
-			layerArray.forEach(item => {
-				item.visible = false;
-			})
-			// view.ui.add("optionsDiv", "bottom-right");
-			view.ui.add({
-				component: "optionsDiv",
-				position: "bottom-right",
-				container: "footer"
-			});
-			const sketchViewModel = new SketchViewModel({
-				view: view,
-				layer: tempGraphicsLayer,
-				pointSymbol: { // 點圖形樣式
+		checkLocate(); // 地圖生成後check switch狀態
+		let layerArray = [district, countyFeatureLayer, policeLayer, nuclearLayer, fireBrigadeLayer, hospitalLayer, tempGraphicsLayer]; // 預設圖層關閉，減少雜亂顯示
+		layerArray.forEach(item => {
+			item.visible = false;
+		})
+		appConfig.mapView.ui.add({
+			component: "optionsDiv",
+			position: "bottom-right",
+		});
+		appConfig.mapView.ui.add({
+			component: "switchIdentify",
+			position: "bottom-right",
+		});
+		document.querySelector(".custom-widget-container ").append(document.getElementById("switchIdentify"));
+		document.querySelector(".custom-widget-container ").append(document.getElementById("optionsDiv"));
+		const sketchViewModel = new SketchViewModel({
+			view: appConfig.mapView,
+			layer: tempGraphicsLayer,
+			pointSymbol: { // 點圖形樣式
+				type: "simple-marker",
+				style: "square",
+				color: "rgb(255, 165, 0)",
+				size: "16px",
+				outline: {
+					color: [255, 255, 255],
+					width: 3,
+				}
+			},
+			polylineSymbol: { // 線樣式
+				type: "simple-line",
+				color: "rgb(255, 165, 0)",
+				width: "1",
+				style: "dash"
+			},
+			polygonSymbol: { // 面樣式
+				type: "simple-fill",
+				color: "rgba(255, 165, 0, 0.8)",
+				style: "solid",
+				outline: {
+					color: "white",
+					width: 1
+				}
+			}
+		});
+		sketchViewModel.on("draw-complete", function (evt) {
+			console.log(evt);
+			if (evt.geometry.type === "multipoint") {
+				evt.graphic.symbol = {
 					type: "simple-marker",
 					style: "square",
-					color: "rgb(255, 165, 0)",
+					color: "green",
 					size: "16px",
 					outline: {
 						color: [255, 255, 255],
-						width: 3,
+						width: 3
 					}
-				},
-				polylineSymbol: { // 線樣式
-					type: "simple-line",
-					color: "rgb(255, 165, 0)",
-					width: "1",
-					style: "dash"
-				},
-				polygonSymbol: { // 面樣式
-					type: "simple-fill",
-					color: "rgba(255, 165, 0, 0.8)",
-					style: "solid",
-					outline: {
-						color: "white",
-						width: 1
-					}
-				}
-			});
-			sketchViewModel.on("draw-complete", function (evt) {
-				console.log(evt);
-				if (evt.geometry.type === "multipoint") {
-					evt.graphic.symbol = {
-						type: "simple-marker",
-						style: "square",
-						color: "green",
-						size: "16px",
-						outline: {
-							color: [255, 255, 255],
-							width: 3
-						}
-					};
-				}
-				// 添加圖形到圖層
-				tempGraphicsLayer.add(evt.graphic);
-				setActiveButton();
-			});
-
-			sketchViewModel.on("create", event => {
-				if (event.state === "complete") {
-					const lat = event.graphic.geometry.latitude;
-					const lng = event.graphic.geometry.longitude;
-				}
-			});
-			var drawPointButton = document.getElementById("pointButton");
-			drawPointButton.onclick = function () {
-				sketchViewModel.create("point");
-				setActiveButton(this);
-			};
-
-			/*********************************
-			 * 啟動繪製多點功能
-			 * ****************************/
-			var drawMultipointButton = document.getElementById(
-				"multipointButton");
-			drawMultipointButton.onclick = function () {
-				sketchViewModel.create("multipoint");
-				setActiveButton(this);
-			};
-
-			/*********************************
-			 * 啟動繪製線功能
-			 * ****************************/
-			var drawLineButton = document.getElementById("polylineButton");
-			drawLineButton.onclick = function () {
-				sketchViewModel.create("polyline");
-				setActiveButton(this);
-			};
-
-			/*********************************
-			 * 啟動繪製面功能
-			 * ****************************/
-			var drawPolygonButton = document.getElementById("polygonButton");
-			drawPolygonButton.onclick = function () {
-				sketchViewModel.create("polygon");
-				setActiveButton(this);
-			};
-
-			/*********************************
-			 * 重置 删除
-			 * ****************************/
-			document.getElementById("resetBtn").onclick = function () {
-				tempGraphicsLayer.removeAll();
-				sketchViewModel.delete();
-				setActiveButton();
-			};
-
-			function setActiveButton(selectedButton) {
-				view.focus();
-				var elements = document.getElementsByClassName("active");
-				for (var i = 0; i < elements.length; i++) {
-					elements[i].classList.remove("active");
-				}
-				if (selectedButton) {
-					selectedButton.classList.add("active");
-				}
-			}
-
-			const popupTemplate = {
-				title: "Graphics information in {NAME}",
-				content: graphicChange
-			};
-			tempGraphicsLayer.popupTemplate = popupTemplate;
-
-			function graphicChange(graphicId, graphicType, graphicMappoint) {
-				let date = Date.now();
-				let graphicContent = document.createElement("div");
-				graphicContent.innerHTML = `
-					<p>GraphicID:${date}</p>
-					<p>GraphType:${graphicType}</p>
-				`;
-				view.popup.content = graphicContent;
-				view.popup.open({
-					title: `圖層${graphicId}`,
-					content: graphicContent,
-					location: graphicMappoint,
-				})
-			}
-
-			view.on("click", function (event) {
-				console.log(event);
-				let xSpot = document.querySelector('.coordinate-transform__x input'); // 側邊選單XY input座標值
-				let ySpot = document.querySelector('.coordinate-transform__y input');
-				let lng = document.querySelector('.coordinate-transform__lng input'); // 經緯度欄位
-				let lat = document.querySelector('.coordinate-transform__lat input');
-				lng.value = event.mapPoint.longitude;
-				lat.value = event.mapPoint.latitude;
-				const screenPoint = {
-					x: event.x,
-					y: event.y
 				};
-				xSpot.value = event.x;
-				ySpot.value = event.y;
-				view.hitTest(screenPoint).then(function (res) {
-					const graphic = res.results[0];
-					if (res.results.length && graphic.graphic) {
-						console.log(graphic);
-						let graphicId = graphic.graphic.uid;
-						let graphicType = graphic.graphic.geometry.type;
-						let graphicMappoint = graphic.mapPoint;
-						graphicChange(graphicId, graphicType, graphicMappoint);
-					}
-				})
-				// 觸發executeIdentify函式處理Identify
-				executeIdentify(event);
-			});
-
-
-			params = new IdentifyParameters(); // 全域的params賦值
-			params.tolerance = 3;
-			params.layerIds = [0, 1, 2, 3, 4];
-			params.layerOption = "top";
-			params.width = view.width;
-			params.height = view.height;
+			}
+			// 添加圖形到圖層
+			tempGraphicsLayer.add(evt.graphic);
+			setActiveButton();
 		});
 
+		sketchViewModel.on("create", event => {
+			if (event.state === "complete") {
+				const lat = event.graphic.geometry.latitude;
+				const lng = event.graphic.geometry.longitude;
+			}
+		});
+		var drawPointButton = document.getElementById("pointButton");
+		drawPointButton.onclick = function () {
+			sketchViewModel.create("point");
+			setActiveButton(this);
+		};
+
+		/*********************************
+		 * 啟動繪製多點功能
+		 * ****************************/
+		var drawMultipointButton = document.getElementById(
+			"multipointButton");
+		drawMultipointButton.onclick = function () {
+			sketchViewModel.create("multipoint");
+			setActiveButton(this);
+		};
+
+		/*********************************
+		 * 啟動繪製線功能
+		 * ****************************/
+		var drawLineButton = document.getElementById("polylineButton");
+		drawLineButton.onclick = function () {
+			sketchViewModel.create("polyline");
+			setActiveButton(this);
+		};
+
+		/*********************************
+		 * 啟動繪製面功能
+		 * ****************************/
+		var drawPolygonButton = document.getElementById("polygonButton");
+		drawPolygonButton.onclick = function () {
+			sketchViewModel.create("polygon");
+			setActiveButton(this);
+		};
+
+		/*********************************
+		 * 重置 删除
+		 * ****************************/
+		document.getElementById("resetBtn").onclick = function () {
+			tempGraphicsLayer.removeAll();
+			sketchViewModel.delete();
+			setActiveButton();
+		};
+
+		function setActiveButton(selectedButton) {
+			appConfig.mapView.focus();
+			var elements = document.getElementsByClassName("active");
+			for (var i = 0; i < elements.length; i++) {
+				elements[i].classList.remove("active");
+			}
+			if (selectedButton) {
+				selectedButton.classList.add("active");
+			}
+		}
+
+		const popupTemplate = {
+			title: "Graphics information in {NAME}",
+			content: graphicChange
+		};
+		tempGraphicsLayer.popupTemplate = popupTemplate;
+
+		function graphicChange(graphicId, graphicType, graphicMappoint) {
+			let date = Date.now();
+			let graphicContent = document.createElement("div");
+			graphicContent.innerHTML = `
+				<p>GraphicID:${date}</p>
+				<p>GraphType:${graphicType}</p>
+			`;
+			appConfig.mapView.popup.content = graphicContent;
+			appConfig.mapView.popup.open({
+				title: `圖層${graphicId}`,
+				content: graphicContent,
+				location: graphicMappoint,
+			})
+		}
+
+		appConfig.mapView.on("click", function (event) {
+			console.log(event);
+			checkLocate(); // view每click一次check switch btn active狀態
+			let xSpot = document.querySelector('.coordinate-transform__x input'); // 側邊選單XY input座標值
+			let ySpot = document.querySelector('.coordinate-transform__y input');
+			let lng = document.querySelector('.coordinate-transform__lng input'); // 經緯度欄位
+			let lat = document.querySelector('.coordinate-transform__lat input');
+			lng.value = event.mapPoint.longitude;
+			lat.value = event.mapPoint.latitude;
+			const screenPoint = {
+				x: event.x,
+				y: event.y
+			};
+			xSpot.value = event.x;
+			ySpot.value = event.y;
+			appConfig.mapView.hitTest(screenPoint).then(function (res) {
+				const graphic = res.results[0];
+				if (res.results.length && graphic.graphic) {
+					console.log(graphic);
+					let graphicId = graphic.graphic.uid;
+					let graphicType = graphic.graphic.geometry.type;
+					let graphicMappoint = graphic.mapPoint;
+					graphicChange(graphicId, graphicType, graphicMappoint);
+				}
+			})
+			// 觸發executeIdentify函式處理Identify
+			executeIdentify(event);
+		});
+
+
+		params = new IdentifyParameters(); // 全域的params賦值
+		params.tolerance = 3;
+		params.layerIds = [0, 1, 2, 3, 4];
+		params.layerOption = "top";
+		params.width = appConfig.mapView.width;
+		params.height = appConfig.mapView.height;
+
 		let highlight;
-		view.whenLayerView(countyFeatureLayer)
+		appConfig.mapView.whenLayerView(countyFeatureLayer)
 			.then(function (layerView) {
-				console.log(countyFeatureLayer.spatialReference.wkid);
 				let countySelectChange = document.getElementById("countySelect");
 				let query = layerView.createQuery();
 				countySelectChange.addEventListener("change", function () {
@@ -515,7 +586,7 @@ require(
 					query.returnQueryGeometry = true;
 					countyFeatureLayer.queryFeatures(query).then(function (result) {
 						console.log(result);
-						view.goTo(result.features[0].geometry);
+						appConfig.mapView.goTo(result.features[0].geometry);
 						if (highlight) {
 							highlight.remove();
 						}
@@ -541,11 +612,27 @@ require(
 				// 			view.goTo(response.features[0].geometry);
 				// 		})
 				// })
-
 			})
 			.catch(function (error) {
 				console.log(error);
 			})
+		// 地震
+		appConfig.mapView.whenLayerView(earthquakeLayer).then(function(layerView){
+			console.log(layerView);
+			earthquakeLayer.definitionExpression = "mag > 3";
+		});
+
+
+		function createQuakeSymbol(color) {
+			return {
+				type: "simple-marker",
+				color: null,
+				outline: {
+					color: color,
+					width: "2px"
+				}
+			};
+		}
 
 		function getDistrictInfo(feature) {
 			let graphic, attributes;
@@ -563,9 +650,10 @@ require(
 			let attributes;
 			// Set the geometry to the location of the view click
 			params.geometry = event.mapPoint;
-			params.mapExtent = view.extent;
+			params.mapExtent = appConfig.mapView.extent;
+			params.layerIds = 1;
 			identify.identify(districtUrl, params).then(function (response) {
-				if (response.results.length) {
+				if (response.results.length && data.isActive) {
 					attributes = response.results[0].feature.attributes;
 					document.querySelector(".locate__content").innerHTML = "";
 					var locateInfo = document.createElement("p");
@@ -604,22 +692,13 @@ require(
 	});
 
 function toggleLocateInfo() {
-	let x = document.querySelector(".side-menu__content");
-	console.log(x.style.display);
-	console.log(123);
-	if (x.style.display === "none") {
-		x.style.display = "block";
-	} else {
-		x.style.display = "none";
-	}
+	data.isActive = !data.isActive;
+	checkLocate();
 }
 
-function checkInfo() {
-	let locateContent = document.querySelector(".locate__content");
-	if (locateContent && locateContent.childNodes.length !== 0) {
-		document.getElementById("switch-shadow").checked = true;
-	} else {
-		document.querySelector('.switch--shadow').checked = false;
+function checkLocate() {
+	if (data.isActive === false) {
+		document.querySelector(".locate__content").innerHTML = `<p class="locate__content--onactive">請啟用地區資訊</p>`;
 	}
 }
 
@@ -638,5 +717,34 @@ function transformWGS() {
 		document.querySelector(".transform-result__3824").textContent = TWD3824[0] + " , " + TWD3824[1];
 	} else {
 		alert("請填寫座標值，或點選地圖上任意位置以取得座標!!");
+	}
+}
+
+function transformCoordinate(value) {
+	let lng = document.querySelector(".coordinate-transform__lng .input-container input");
+	let lat = document.querySelector(".coordinate-transform__lat .input-container input");
+	switch (value) {
+		case "epsg4326to3826":
+			console.log(value);
+			let TWD97121 = helper.epsg4326to3826([lng.value, lat.value]);
+			document.querySelector(".transform-result__121").textContent = TWD97121[0] + " , " + TWD97121[1];
+			break;
+		case "epsg4326to3825":
+			console.log(value);
+			let TWD97119 = helper.epsg4326to3825([lng.value, lat.value]);
+			document.querySelector(".transform-result__119").textContent = TWD97119[0] + " , " + TWD97119[1];
+			break;
+		case "epsg4326to3857":
+			console.log(value);
+			let TWD3857 = helper.epsg4326to3857([lng.value, lat.value]);
+			document.querySelector(".transform-result__3857").textContent = TWD3857[0] + " , " + TWD3857[1];
+			break;
+		case "epsg4326to3824":
+			console.log(value);
+			let TWD3824 = helper.epsg4326to3824([lng.value, lat.value]);
+			document.querySelector(".transform-result__3824").textContent = TWD3824[0] + " , " + TWD3824[1];
+			break;
+		default:
+			break;
 	}
 }
