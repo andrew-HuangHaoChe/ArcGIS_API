@@ -1,5 +1,36 @@
 @import "./reset";
 
+.input-container {
+	position: relative;
+	input {
+		outline: none;
+		z-index: 1;
+		position: relative;
+		background: none;
+		width: 100%;
+		height: 30px;
+		border: 0;
+		color: #212121;
+		font-size: 20px;
+		font-weight: 400;
+	}
+
+	.bar {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		background: #757575;
+		width: 100%;
+		height: 1px;
+		&::before {
+			left: 50%;
+		}
+		&::after {
+			right: 50%;
+		}
+	}
+}
+
 .map {
 	position: relative;
 	display: block;
@@ -64,9 +95,31 @@
 	padding: 10px 0;
 	background-color: aliceblue;
 
+	.custom-widget-container {
+		padding: 0 15px;
+		display: flex;
+		justify-content: flex-start;
+
+		.esri-component {
+			box-shadow: none;
+			margin-left: 0;
+		}
+
+		#optionsDiv {}
+
+		#switchIdentify {
+			background-color: aliceblue;
+
+			>h3 {
+				margin-bottom: 5px;
+			}
+		}
+	}
+
 	#outputMessages {
 		background-color: aliceblue;
 		padding: 0 15px;
+		margin-bottom: 10px;
 	}
 }
 
@@ -104,7 +157,6 @@
 
 /* Estilo iOS */
 .switch__container {
-	width: 30px;
 	float: right;
 	clear: both;
 	padding-right: 32px;
@@ -174,6 +226,10 @@
 			font-size: 20px;
 			line-height: 1.5;
 		}
+
+		&--onactive {
+			color: #9e9e9e;
+		}
 	}
 }
 
@@ -205,7 +261,8 @@
 .transform {
 	&-result {
 		margin-bottom: 10px;
-		> h5 {
+
+		>h5 {
 			padding-bottom: 10px;
 			font-weight: 600;
 		}

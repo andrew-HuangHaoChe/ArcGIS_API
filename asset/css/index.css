@@ -59,6 +59,40 @@ table {
   border-spacing: 0;
 }
 
+.input-container {
+  position: relative;
+}
+
+.input-container input {
+  outline: none;
+  z-index: 1;
+  position: relative;
+  background: none;
+  width: 100%;
+  height: 30px;
+  border: 0;
+  color: #212121;
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.input-container .bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  background: #757575;
+  width: 100%;
+  height: 1px;
+}
+
+.input-container .bar::before {
+  left: 50%;
+}
+
+.input-container .bar::after {
+  right: 50%;
+}
+
 .map {
   position: relative;
   display: block;
@@ -131,9 +165,34 @@ table {
   background-color: aliceblue;
 }
 
+#footer .custom-widget-container {
+  padding: 0 15px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: start;
+      -ms-flex-pack: start;
+          justify-content: flex-start;
+}
+
+#footer .custom-widget-container .esri-component {
+  -webkit-box-shadow: none;
+          box-shadow: none;
+  margin-left: 0;
+}
+
+#footer .custom-widget-container #switchIdentify {
+  background-color: aliceblue;
+}
+
+#footer .custom-widget-container #switchIdentify > h3 {
+  margin-bottom: 5px;
+}
+
 #footer #outputMessages {
   background-color: aliceblue;
   padding: 0 15px;
+  margin-bottom: 10px;
 }
 
 .esri-scale-bar__bar-container {
@@ -162,7 +221,6 @@ table {
 
 /* Estilo iOS */
 .switch__container {
-  width: 30px;
   float: right;
   clear: both;
   padding-right: 32px;
@@ -238,6 +296,10 @@ table {
 .locate__content p {
   font-size: 20px;
   line-height: 1.5;
+}
+
+.locate__content--onactive {
+  color: #9e9e9e;
 }
 
 .coordinate-transform {
