@@ -63,23 +63,33 @@
 							<div class="bar"></div>
 						</div>
 					</div>
-					<button class="transform-btn" onclick="transformWGS()">轉換</button>
-					<div class="transform-result">
-						<button value="epsg4326to3826" onclick="transformCoordinate(value)">TWD97二度分帶座標(本島121):</button>
-						<p class="transform-result__121"></p>
+					<div class="coordinate-transform__widget">
+						<button class="transform-btn" onclick="transformWGS()">轉換</button>
+						<!-- <div class="transform-result">
+							<button value="epsg4326to3826" onclick="transformCoordinate(value)">TWD97二度分帶座標(本島121):</button>
+							<p class="transform-result__121"></p>
+						</div>
+						<div class="transform-result">
+							<button value="epsg4326to3825" onclick="transformCoordinate(value)">TWD97二度分帶座標(離島119):</button>
+							<p class="transform-result__119"></p>
+						</div>
+						<div class="transform-result">
+							<button value="epsg4326to3857" onclick="transformCoordinate(value)">EPSG:3857:</button>
+							<p class="transform-result__3857"></p>
+						</div>
+						<div class="transform-result">
+							<button value="epsg4326to3824" onclick="transformCoordinate(value)">EPSG:3824:</button>
+							<p class="transform-result__3824"></p>
+						</div> -->
+						<select name="" id="" class="transform-option" onchange="transformCoordinate(value)">
+							<option value="" selected disabled>請選擇愈轉換的座標系統</option>
+							<option value="epsg4326to3826">TWD97二度分帶座標(本島121)</option>
+							<option value="epsg4326to3825">TWD97二度分帶座標(離島119)</option>
+							<option value="epsg4326to3857">EPSG:3857</option>
+							<option value="epsg4326to3824">EPSG:3824</option>
+						</select>
 					</div>
-					<div class="transform-result">
-						<button value="epsg4326to3825" onclick="transformCoordinate(value)">TWD97二度分帶座標(離島119):</button>
-						<p class="transform-result__119"></p>
-					</div>
-					<div class="transform-result">
-						<button value="epsg4326to3857" onclick="transformCoordinate(value)">EPSG:3857:</button>
-						<p class="transform-result__3857"></p>
-					</div>
-					<div class="transform-result">
-						<button value="epsg4326to3824" onclick="transformCoordinate(value)">EPSG:3824:</button>
-						<p class="transform-result__3824"></p>
-					</div>
+					<p class="transform-result"></p>
 				</div>
 			</div>
 		</nav>
@@ -109,14 +119,14 @@
 			<select class="esri-widget" id="countySelect">
 			</select>
 		</div>
-		<div id="infoDiv">
+		<!-- <div id="infoDiv">
 			<input
 			  class="esri-component esri-widget--button esri-widget esri-interactive"
 			  type="button"
 			  id="switch-btn"
 			  value="3D"
 			/>
-		</div>
+		</div> -->
 		<div id="footer">
 			<div id="outputMessages" class="esri-widget"></div>
 			<div class="custom-widget-container"></div>

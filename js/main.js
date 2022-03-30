@@ -35,6 +35,7 @@ require(
 		"esri/WebScene",
 		"esri/WebMap",
 		"esri/layers/GeoJSONLayer",
+		"esri/renderers/SimpleRenderer",
 	],
 	function (
 		SketchViewModel,
@@ -69,6 +70,7 @@ require(
 		WebScene,
 		WebMap,
 		GeoJSONLayer,
+		SimpleRenderer,
 	) {
 		// https://wmts.nlsc.gov.tw/wmts/EMAP2/default/GoogleMapsCompatible/{level}/{row}/{col}
 		const countyUrl = "https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{level}/{row}/{col}";
@@ -116,7 +118,7 @@ require(
 			container: appConfig.container,
 			map: map,
 		};
-		const switchButton = document.getElementById("switch-btn");
+		// const switchButton = document.getElementById("switch-btn");
 
 
 		// create 2D view and and set active
@@ -130,9 +132,9 @@ require(
 		// appConfig.sceneView = createView(initialViewParams, "3d");
 
 		// switch the view between 2D and 3D each time the button is clicked
-		switchButton.addEventListener("click", () => {
-			switchView();
-		});
+		// switchButton.addEventListener("click", () => {
+		// 	switchView();
+		// });
 		// Switches the view from 2D to 3D and vice versa
 		function switchView() {
 			const is3D = appConfig.activeView.type === "3d";
@@ -313,57 +315,205 @@ require(
 			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/2",
 			title: "醫院圖層"
 		});
+		// let earthQuakeRenderer = {
+		// 	type: "simple", // autocasts as new SimpleRenderer()
+		// 	symbol: {
+		// 		type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+		// 		size: 6,
+		// 		color: "#FF9300",
+		// 		outline: { // autocasts as new SimpleLineSymbol()
+		// 			width: 0.5,
+		// 			color: "white"
+		// 		}
+		// 	}
+		// };
+		// earthQuakeRenderer.visualVariables = [
+		// 	{
+		// 		type: "color",
+		// 		field: "mag",
+		// 		stops: [
+		// 			{ value: 3, color: "#F6F50C" },
+		// 			{ value: 7, color: "#FF0000" },
+		// 		]
+		// 	},
+		// 	{
+		// 		type: "size",
+		// 		field: "mag",
+		// 		stops: [
+		// 			{ value: 3, size: 3 },
+		// 			{ value: 7, size: 40 },
+		// 		]
+		// 	}
+		// ]
+		const baseSymbolLayer = {
+			type: "simple-fill",
+			size: 6,
+			color: "#FF9300",
+			style: "solid",
+			outline: {
+				width: 0.5,
+				color: "white"
+			}
+		}
+		const secondSymbolLayer = {
+			type: "simple-fill",
+			size: 3,
+			color: "#F6F50C",
+			style: "solid",
+			outline: {
+				width: 0.5,
+				color: "white"
+			}
+		}
+		const thirdSymbolLayer = {
+			type: "simple-fill",
+			size: 40,
+			color: "#FF0000",
+			style: "solid",
+			outline: {
+				width: 0.5,
+				color: "white"
+			}
+		}
+		// const renderer = {
+		// 	type: "class-breaks", // autocasts as new ClassBreaksRenderer()
+		// 	field: "mag",
+		// 	defaultLabel: "No data",
+		// 	defaultSymbol: {
+		// 		type: "simple-fill", // autocasts as new SimpleFillSymbol()
+		// 		color: "yellow",
+		// 		style: "backward-diagonal",
+		// 		outline: {
+		// 			width: 0.5,
+		// 			color: [50, 50, 50, 0.6]
+		// 		}
+		// 	},
+		// 	classBreakInfos: [
+		// 		{
+		// 			minValue: 3,
+		// 			maxValue: 6,
+		// 			symbol: secondSymbolLayer,
+		// 		},
+		// 		{
+		// 			minValue: 7,
+		// 			maxValue: 15,
+		// 			symbol: thirdSymbolLayer,
+		// 		},
+		// 	]
+		// }
+		const renderer = {
+			type: "simple",
+			symbol: {
+				type: "simple-marker",
+				outline: {
+					color: [255, 255, 255, 0.7],
+					width: 0.5
+				}
+			},
+			visualVariables: [
+				{
+					type: "size",
+					field: "mag",
+					stops: [
+						{
+							value: 3,
+							size: 4
+						},
+						{
+							value: 7,
+							size: 40
+						}
+					]
+				},
+				{
+					type: "color",
+					field: "mag",
+					stops: [
+						{
+							value: 3,
+							color: "#F6F50C",
+						},
+						{
+							value: 7,
+							color: "#DC131A",
+						}
+					]
+				}
+			]
+		}
 		const earthquakeLayer = new GeoJSONLayer({
 			url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
 			title: "地震圖層",
 			id: "6",
-			customParameters: {
-				format: "geojson",
-				minmagnitude: 1,
-				alertlevel: "red",
-			},
+			renderer: renderer,
+			definitionExpression: "mag >= 3",
 			outFields: ["*"],
-			// renderer: { // apply unique values to alert levels
-			// 	type: "unique-value",
-			// 	field: "alert",
-			// 	uniqueValueInfos: [{
-			// 			value: "red",
-			// 			symbol: createQuakeSymbol("red")
-			// 		},
-			// 		{
-			// 			value: "orange",
-			// 			symbol: createQuakeSymbol("orange")
-			// 		},
-			// 		{
-			// 			value: "yellow",
-			// 			symbol: createQuakeSymbol("yellow")
-			// 		},
-			// 		{
-			// 			value: "green",
-			// 			symbol: createQuakeSymbol("#136d15")
-			// 		}
-			// 	],
-			// 	visualVariables: [{
-			// 		type: "size",
-			// 		field: "mag",
-			// 		stops: [{
-			// 				value: 3,
-			// 				size: "4px",
-			// 				color: "yellow"
-			// 			},
-			// 			{
-			// 				value: 6,
-			// 				size: "20px"
-			// 			},
-			// 			{
-			// 				value: 7,
-			// 				size: "40px",
-			// 				color: "red"
-			// 			}
-			// 		]
-			// 	}]
-			// },
+			popupTemplate: {
+				title: "地震資訊",
+				content: queryChargingStations
+			}
 		});
+		function queryChargingStations (target) {
+			let text = ``;
+			let date = new Date(target.graphic.attributes.time);
+			if (date.getHours() >= 0 && date.getHours() <= 12) {
+				text = `上午`;
+			} else if (date.getHours() > 12 && date.getHours() <= 24) {
+				text = `下午`;
+			}
+			let content = `地震規模: ${target.graphic.attributes.mag}<br>
+			地震時間: ${date.getFullYear()}/${date.getMonth() + 1}/${date.getDay()} ${text} ${date.getHours()}:${date.getMinutes()}`;
+			return content;
+		}
+
+		// let earthquakeQuery = earthquakeLayer.createQuery();
+		// earthquakeQuery.where = "mag >= 3";
+		// earthquakeQuery.id="6";
+		// earthquakeQuery.outFields = ["*"];
+		//earthquakeLayer.queryFeatures(earthquakeQuery).then(function (result) {
+		//console.log(result.features);
+		//const renderer = {
+		//type: "class-breaks",
+		//field: "mag",
+		// defaultSymbol: {
+		// 	type: "simple-fill", // autocasts as new SimpleFillSymbol()
+		// 	color: "red",
+		// 	style: "backward-diagonal",
+		// 	outline: {
+		// 	  width: 0.5,
+		// 	  color: [50, 50, 50, 0.6]
+		// 	}
+		// },
+		// classBreakInfos: [
+		// 	{
+		// 		minValue: 1,
+		// 		maxValue: 3,
+		// 		symbol: {
+		// 			type: "simple-marker",
+		// 			symbolLayers: [baseSymbolLayer]
+		// 		},
+		// 	},
+		// 	{
+		// 		minValue: 3,
+		// 		maxValue: 6,
+		// 		symbol: {
+		// 			type: "simple-marker",
+		// 			symbolLayers: [baseSymbolLayer, secondSymbolLayer]
+		// 		},
+		// 	},
+		// 	{
+		// 		minValue: 7,
+		// 		maxValue: 12,
+		// 		symbol: {
+		// 			type: "simple-marker",
+		// 			symbolLayers: [baseSymbolLayer, secondSymbolLayer, thirdSymbolLayer]
+		// 		},
+		// 	},
+		// ]
+		//};
+		// earthquakeLayer.renderer = renderer;
+		// console.log(earthquakeLayer.renderer);
+		//});
 		const nuclearLayer = new WMSLayer({
 			url: "https://dwgis.ncdr.nat.gov.tw/arcgis/services/ncdr/PowerPlant/MapServer/WmsServer",
 			title: "核電廠圖層"
@@ -616,23 +766,6 @@ require(
 			.catch(function (error) {
 				console.log(error);
 			})
-		// 地震
-		appConfig.mapView.whenLayerView(earthquakeLayer).then(function(layerView){
-			console.log(layerView);
-			earthquakeLayer.definitionExpression = "mag > 3";
-		});
-
-
-		function createQuakeSymbol(color) {
-			return {
-				type: "simple-marker",
-				color: null,
-				outline: {
-					color: color,
-					width: "2px"
-				}
-			};
-		}
 
 		function getDistrictInfo(feature) {
 			let graphic, attributes;
@@ -701,50 +834,41 @@ function checkLocate() {
 		document.querySelector(".locate__content").innerHTML = `<p class="locate__content--onactive">請啟用地區資訊</p>`;
 	}
 }
-
+let transformSelect = '';
 function transformWGS() {
-	let lng = document.querySelector(".coordinate-transform__lng input");
-	let lat = document.querySelector(".coordinate-transform__lat input");
-	console.log(lng.value, lat.value);
-	if (lng.value !== '' || lat.value !== '') {
-		let TWD97121 = helper.epsg4326to3826([lng.value, lat.value]);
-		let TWD97119 = helper.epsg4326to3825([lng.value, lat.value]);
-		let TWD3857 = helper.epsg4326to3857([lng.value, lat.value]);
-		let TWD3824 = helper.epsg4326to3824([lng.value, lat.value]);
-		document.querySelector(".transform-result__121").textContent = TWD97121[0] + " , " + TWD97121[1];
-		document.querySelector(".transform-result__119").textContent = TWD97119[0] + " , " + TWD97119[1];
-		document.querySelector(".transform-result__3857").textContent = TWD3857[0] + " , " + TWD3857[1];
-		document.querySelector(".transform-result__3824").textContent = TWD3824[0] + " , " + TWD3824[1];
+	let option = document.querySelector(".transform-option");
+	let lng = document.querySelector(".coordinate-transform__lng .input-container input");
+	let lat = document.querySelector(".coordinate-transform__lat .input-container input");
+	if (lng.value !== '' || lat.value !== '' || option.value !== '') {
+		switch (transformSelect) {
+			case "epsg4326to3826":
+				console.log(transformSelect);
+				let TWD97121 = helper.epsg4326to3826([lng.value, lat.value]);
+				document.querySelector(".transform-result").textContent = TWD97121[0] + " , " + TWD97121[1];
+				break;
+			case "epsg4326to3825":
+				console.log(transformSelect);
+				let TWD97119 = helper.epsg4326to3825([lng.value, lat.value]);
+				document.querySelector(".transform-result").textContent = TWD97119[0] + " , " + TWD97119[1];
+				break;
+			case "epsg4326to3857":
+				console.log(transformSelect);
+				let TWD3857 = helper.epsg4326to3857([lng.value, lat.value]);
+				document.querySelector(".transform-result").textContent = TWD3857[0] + " , " + TWD3857[1];
+				break;
+			case "epsg4326to3824":
+				console.log(transformSelect);
+				let TWD3824 = helper.epsg4326to3824([lng.value, lat.value]);
+				document.querySelector(".transform-result").textContent = TWD3824[0] + " , " + TWD3824[1];
+				break;
+			default:
+				break;
+		}
 	} else {
-		alert("請填寫座標值，或點選地圖上任意位置以取得座標!!");
+		alert("請填寫座標值或是轉換座標格式尚未選擇；亦可點選地圖上任意位置以取得座標!!");
 	}
 }
 
 function transformCoordinate(value) {
-	let lng = document.querySelector(".coordinate-transform__lng .input-container input");
-	let lat = document.querySelector(".coordinate-transform__lat .input-container input");
-	switch (value) {
-		case "epsg4326to3826":
-			console.log(value);
-			let TWD97121 = helper.epsg4326to3826([lng.value, lat.value]);
-			document.querySelector(".transform-result__121").textContent = TWD97121[0] + " , " + TWD97121[1];
-			break;
-		case "epsg4326to3825":
-			console.log(value);
-			let TWD97119 = helper.epsg4326to3825([lng.value, lat.value]);
-			document.querySelector(".transform-result__119").textContent = TWD97119[0] + " , " + TWD97119[1];
-			break;
-		case "epsg4326to3857":
-			console.log(value);
-			let TWD3857 = helper.epsg4326to3857([lng.value, lat.value]);
-			document.querySelector(".transform-result__3857").textContent = TWD3857[0] + " , " + TWD3857[1];
-			break;
-		case "epsg4326to3824":
-			console.log(value);
-			let TWD3824 = helper.epsg4326to3824([lng.value, lat.value]);
-			document.querySelector(".transform-result__3824").textContent = TWD3824[0] + " , " + TWD3824[1];
-			break;
-		default:
-			break;
-	}
+	transformSelect = value;
 }
