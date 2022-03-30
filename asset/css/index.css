@@ -335,6 +335,16 @@ table {
   height: 20px;
 }
 
+.coordinate-transform__widget {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  margin-bottom: 10px;
+}
+
 .transform-result {
   margin-bottom: 10px;
 }
@@ -350,14 +360,31 @@ table {
   color: #5d5d5d;
   -webkit-transition: all .3s;
   transition: all .3s;
-  padding: 10px 30px;
+  padding: 10px;
+  margin-right: 10px;
   cursor: pointer;
-  margin-bottom: 10px;
   font-size: 18px;
 }
 
 .transform-btn:hover {
   background-color: #5d5d5d;
   color: white;
+}
+
+.transform-option {
+  padding: 10px;
+  min-height: 46px;
+  border: 1px solid #5d5d5d;
+  outline: none;
+  color: #5d5d5d;
+  -webkit-transition: all .3s ease-in-out;
+  transition: all .3s ease-in-out;
+  font-size: 18px;
+}
+
+.transform-option:focus {
+  border: 1px solid #161616;
+  -webkit-box-shadow: 0 0 5px #757575;
+          box-shadow: 0 0 5px #757575;
 }
 /*# sourceMappingURL=index.css.map */
