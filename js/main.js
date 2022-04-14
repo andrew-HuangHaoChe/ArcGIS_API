@@ -36,6 +36,7 @@ require(
 		"esri/WebMap",
 		"esri/layers/GeoJSONLayer",
 		"esri/renderers/SimpleRenderer",
+		"esri/identity/IdentityManager",
 	],
 	function (
 		SketchViewModel,
@@ -71,6 +72,7 @@ require(
 		WebMap,
 		GeoJSONLayer,
 		SimpleRenderer,
+		esriId,
 	) {
 		// https://wmts.nlsc.gov.tw/wmts/EMAP2/default/GoogleMapsCompatible/{level}/{row}/{col}
 		const countyUrl = "https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{level}/{row}/{col}";
@@ -281,7 +283,7 @@ require(
 		esriConfig.request.interceptors.push({
 			urls: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR",
 			before: function (params) {
-				params.requestOptions.query.token = "1jEODLnMEyMKmcJR-uO_sbCZMHnP0uMD7OxDrOZi0OtgZzais3KwQ6z9AVjjQbCv";
+				params.requestOptions.query.token = "WA76UyIk01XyBnYp0z4RracYBU5Q0PnmrC6MZUKrBeEYFM7UbNDLoGJ89qon-nS3wisM7V37yUliFoKpMsQ3Rw..";
 			},
 		});
 		const district = new MapImageLayer({
@@ -315,136 +317,98 @@ require(
 			url: "https://richimap1.richitech.com.tw/arcgis/rest/services/NCDR/NCDR_SDE_Point/MapServer/2",
 			title: "醫院圖層"
 		});
-		// let earthQuakeRenderer = {
-		// 	type: "simple", // autocasts as new SimpleRenderer()
-		// 	symbol: {
-		// 		type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
-		// 		size: 6,
-		// 		color: "#FF9300",
-		// 		outline: { // autocasts as new SimpleLineSymbol()
-		// 			width: 0.5,
-		// 			color: "white"
-		// 		}
-		// 	}
-		// };
-		// earthQuakeRenderer.visualVariables = [
-		// 	{
-		// 		type: "color",
-		// 		field: "mag",
-		// 		stops: [
-		// 			{ value: 3, color: "#F6F50C" },
-		// 			{ value: 7, color: "#FF0000" },
-		// 		]
-		// 	},
-		// 	{
-		// 		type: "size",
-		// 		field: "mag",
-		// 		stops: [
-		// 			{ value: 3, size: 3 },
-		// 			{ value: 7, size: 40 },
-		// 		]
-		// 	}
-		// ]
-		const baseSymbolLayer = {
-			type: "simple-fill",
-			size: 6,
-			color: "#FF9300",
-			style: "solid",
-			outline: {
-				width: 0.5,
-				color: "white"
-			}
-		}
+		// 地震point樣式物件start
 		const secondSymbolLayer = {
-			type: "simple-fill",
-			size: 3,
+			type: "simple-marker",
+			size: "10px",
 			color: "#F6F50C",
-			style: "solid",
+			style: "circle",
 			outline: {
 				width: 0.5,
 				color: "white"
 			}
 		}
 		const thirdSymbolLayer = {
-			type: "simple-fill",
-			size: 40,
+			type: "simple-marker",
+			size: "40px",
 			color: "#FF0000",
-			style: "solid",
+			style: "circle",
 			outline: {
 				width: 0.5,
 				color: "white"
 			}
 		}
-		// const renderer = {
-		// 	type: "class-breaks", // autocasts as new ClassBreaksRenderer()
-		// 	field: "mag",
-		// 	defaultLabel: "No data",
-		// 	defaultSymbol: {
-		// 		type: "simple-fill", // autocasts as new SimpleFillSymbol()
-		// 		color: "yellow",
-		// 		style: "backward-diagonal",
-		// 		outline: {
-		// 			width: 0.5,
-		// 			color: [50, 50, 50, 0.6]
-		// 		}
-		// 	},
-		// 	classBreakInfos: [
-		// 		{
-		// 			minValue: 3,
-		// 			maxValue: 6,
-		// 			symbol: secondSymbolLayer,
-		// 		},
-		// 		{
-		// 			minValue: 7,
-		// 			maxValue: 15,
-		// 			symbol: thirdSymbolLayer,
-		// 		},
-		// 	]
-		// }
+		// 地震point樣式物件end
 		const renderer = {
-			type: "simple",
-			symbol: {
-				type: "simple-marker",
+			type: "class-breaks", // autocasts as new ClassBreaksRenderer()
+			field: "mag",
+			defaultLabel: "No data",
+			defaultSymbol: {
+				type: "simple-marker", // autocasts as new SimpleFillSymbol()
+				color: "#F6F50C",
+				style: "circle",
 				outline: {
-					color: [255, 255, 255, 0.7],
-					width: 0.5
+					width: 0.5,
+					color: "white"
 				}
 			},
-			visualVariables: [
+			classBreakInfos: [
 				{
-					type: "size",
-					field: "mag",
-					stops: [
-						{
-							value: 3,
-							size: 4
-						},
-						{
-							value: 7,
-							size: 40
-						}
-					]
+					minValue: 3,
+					maxValue: 6,
+					symbol: secondSymbolLayer,
 				},
 				{
-					type: "color",
-					field: "mag",
-					stops: [
-						{
-							value: 3,
-							color: "#F6F50C",
-						},
-						{
-							value: 7,
-							color: "#DC131A",
-						}
-					]
-				}
+					minValue: 7,
+					maxValue: 20,
+					symbol: thirdSymbolLayer,
+				},
 			]
 		}
+		// const renderer = {
+		// 	type: "simple",
+		// 	symbol: {
+		// 		type: "simple-marker",
+		// 		outline: {
+		// 			color: [255, 255, 255, 0.7],
+		// 			width: 0.5
+		// 		}
+		// 	},
+		// 	visualVariables: [
+		// 		{
+		// 			type: "size",
+		// 			field: "mag",
+		// 			stops: [
+		// 				{
+		// 					value: 3,
+		// 					size: 4
+		// 				},
+		// 				{
+		// 					value: 7,
+		// 					size: 40
+		// 				}
+		// 			]
+		// 		},
+		// 		{
+		// 			type: "color",
+		// 			field: "mag",
+		// 			stops: [
+		// 				{
+		// 					value: 3,
+		// 					color: "#F6F50C",
+		// 				},
+		// 				{
+		// 					value: 7,
+		// 					color: "#DC131A",
+		// 				}
+		// 			]
+		// 		}
+		// 	]
+		// }
 		const earthquakeLayer = new GeoJSONLayer({
 			url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
 			title: "地震圖層",
-			id: "6",
+			id: "6", // client 做識別用
 			renderer: renderer,
 			definitionExpression: "mag >= 3",
 			outFields: ["*"],
@@ -682,8 +646,17 @@ require(
 				location: graphicMappoint,
 			})
 		}
-
-		appConfig.mapView.on("click", function (event) {
+		var mapClickHandler;
+		document.getElementById("switch-shadow").onclick = function () {
+			data.isActive = !data.isActive;
+			checkLocate();
+			if (data.isActive) {
+				mapClickHandler = appConfig.mapView.on("click", mapClick);
+			} else {
+				mapClickHandler.remove();
+			}
+		}
+		function mapClick(event) {
 			console.log(event);
 			checkLocate(); // view每click一次check switch btn active狀態
 			let xSpot = document.querySelector('.coordinate-transform__x input'); // 側邊選單XY input座標值
@@ -710,8 +683,7 @@ require(
 			})
 			// 觸發executeIdentify函式處理Identify
 			executeIdentify(event);
-		});
-
+		}
 
 		params = new IdentifyParameters(); // 全域的params賦值
 		params.tolerance = 3;
@@ -823,17 +795,6 @@ require(
 		};
 		getCountyData();
 	});
-
-function toggleLocateInfo() {
-	data.isActive = !data.isActive;
-	checkLocate();
-}
-
-function checkLocate() {
-	if (data.isActive === false) {
-		document.querySelector(".locate__content").innerHTML = `<p class="locate__content--onactive">請啟用地區資訊</p>`;
-	}
-}
 let transformSelect = '';
 function transformWGS() {
 	let option = document.querySelector(".transform-option");
@@ -868,7 +829,11 @@ function transformWGS() {
 		alert("請填寫座標值或是轉換座標格式尚未選擇；亦可點選地圖上任意位置以取得座標!!");
 	}
 }
-
+function checkLocate() {
+	if (data.isActive === false) {
+		document.querySelector(".locate__content").innerHTML = `<p class="locate__content--onactive">請啟用地區資訊</p>`;
+	}
+}
 function transformCoordinate(value) {
 	transformSelect = value;
 }
